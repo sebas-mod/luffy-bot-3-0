@@ -5,7 +5,7 @@ const {
     prepareWAMessageMedia
   } = (await import('@adiwajshing/baileys')).default
 
-var link_img = `https://pomf2.lain.la/f/8lplrwo2.jpg`
+var link_img = `https://files.catbox.moe/fmea13.jpg`
 
 let Reg = /\|?(.*)([.|] *?)([0-9]*)$/i
 let handler = async function (m, { text, usedPrefix }) {
@@ -78,7 +78,7 @@ Registrarse significa aceptar los términos
             let txt_title = `✧ WAGURI AI THE BEST BOT WHATSAPP ✧`
             let txt_subtitle = ``
             let creador = `By KenisawaDev (no borrar creditos)`
-            let msg = generateWAMessageFromContent(m.chat, {
+/*            let msg = generateWAMessageFromContent(m.chat, {
   viewOnceMessage: {
     message: {
         "messageContextInfo": {
@@ -159,10 +159,12 @@ Registrarse significa aceptar los términos
         })
     }
   }
-}, { quoted: m })
+}, { quoted: m })*/
+
+await conn.sendMessage(m.chat, { image: { url: link_img }, caption: txt_reg }, {quoted:m})
 
 /*await conn.relayMessage(msg.key.remoteJid, msg.message, { messageId: msg.key.id})*/
-m.reply(txt_reg)
+//m.reply(txt_reg)
 }
 
 handler.help = ['verificar', 'registrar'].map(v => v + ' <nombre>.<edad>')

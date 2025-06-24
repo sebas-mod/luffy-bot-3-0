@@ -154,25 +154,6 @@ let handler = async (m, { conn, usedPrefix: _p, args = [], command }) => {
                 (_, name) => '' + replace[name])
 
 conn.sendFile(m.chat, "https://files.catbox.moe/t0s63z.jpg", 'menu.jpg', estilo(text), global.fliveLoc2, null)
-
-/*            await conn.relayMessage(m.chat, {
-            extendedTextMessage:{
-                text: text, 
-                contextInfo: {
-                    mentionedJid: [m.sender],
-                    externalAdReply: {
-                        title: date,
-                        mediaType: 1,
-                        previewType: 0,
-                        renderLargerThumbnail: true,
-                        thumbnailUrl: 'https://pomf2.lain.la/f/4gv01t8y.png',
-                        sourceUrl: 'https://whatsapp.com/channel/0029VarbyoN2ZjCkcPW7q33F'
-                    }
-                }, 
-                mentions: [m.sender]
-            }
-        }, {})*/
-            return
         }
 
         if (!allTags[teks]) {
@@ -229,24 +210,6 @@ conn.sendFile(m.chat, "https://files.catbox.moe/t0s63z.jpg", 'menu.jpg', estilo(
             (_, name) => '' + replace[name])
 
 conn.sendFile(m.chat, "https://files.catbox.moe/t0s63z.jpg", 'menu.jpg', estilo(text), global.fliveLoc2, null)
-
-/*        await conn.relayMessage(m.chat, {
-            extendedTextMessage:{
-                text: text, 
-                contextInfo: {
-                    mentionedJid: [m.sender],
-                    externalAdReply: {
-                        title: date,
-                        mediaType: 1,
-                        previewType: 0,
-                        renderLargerThumbnail: true,
-                        thumbnailUrl: 'https://pomf2.lain.la/f/7b5qzd8.png',
-                        sourceUrl: 'https://whatsapp.com/channel/0029VarbyoN2ZjCkcPW7q33F'
-                    }
-                }, 
-                mentions: [m.sender]
-            }
-        }, {})*/
     } catch (e) {
         conn.reply(m.chat, 'Perdon, hay un error con el menu', m)
         console.error(e)

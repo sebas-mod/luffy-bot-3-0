@@ -1,69 +1,76 @@
-import fs from "fs"
-import fetch from "node-fetch"
-import FormData from "form-data"
-import { uploadPomf } from '../lib/uploadImage.js'
-const { proto, generateWAMessageFromContent } = (await import('@adiwajshing/baileys')).default;
+import fetch from 'node-fetch';
+import FormData from 'form-data';
+import { fileTypeFromBuffer } from 'file-type';
+const { proto, prepareWAMessageMedia } = (await import('@adiwajshing/baileys')).default;
 
+let handler = async (m, { conn }) => {
+    try {
+        if (m._tourl_done) return; 
+        m._tourl_done = true;
 
-let handler = async m => {
-  try {
-    const q = m.quoted || m
-    const mime = q.mediaType || ""    
-    if (!/image|video|audio|sticker|document/.test(mime)) 
-      throw m.reply("✧ No hay medios marcados!")
-          await conn.sendMessage(m.chat, { react: { text: '🔗', key: m.key } });
-    const media = await q.download(true)
-    let media2 = await q.download()
-    const fileSizeInBytes = fs.statSync(media).size    
-    if (fileSizeInBytes === 0) {
-      await m.reply("Archivo vacio")
-      await fs.promises.unlink(media)
-      return
-    }   
-    if (fileSizeInBytes > 1073741824) {
-      await m.reply("El archivo superó 1 GB")
-      await fs.promises.unlink(media)
-      return
-    }    
-    const { files } = await uploadUguu(media)
-    let url = await uploadPomf(media2)
-    const caption = `\`T O U R L - U P L O A D\`
+        let q = m.quoted ? m.quoted : m;
+        let mime = (q.msg || q).mimetype || q.mediaType || '';
+        if (!mime || mime === 'conversation') return m.reply('¿Que quieres subir?');
 
-✧Uguu Link:
-${files[0]?.url}
+        let media = await q.download();
+        let catboxLink = await catboxUpload(media).catch(() => null);
 
-✧Pomf2 Link:
-${url}
+        if (!catboxLink) throw new Error('Error al cargar el archivo a Catbox.');
 
-${wm}`
-    m.reply(caption)
-    await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
-//    await m.reply(caption)
-  } catch (e) {
-//    await m.reply(`${e}`)
-    await conn.sendMessage(m.chat, { react: { text: '❎', key: m.key } });
-  }
-}
+        let caption = `*Subida exitosa*
+Haz clic en el botón de abajo para copiar la URL.`;
 
-handler.help = ["tourl"]
-handler.tags = ["tools"]
-handler.command = /^(tourl)$/i
-export default handler
+        let thumbnail = await prepareWAMessageMedia(
+            { image: { url: catboxLink } },
+            { upload: conn.waUploadToServer }
+        );
 
-async function uploadUguu(path) {
-  try {
-    const form = new FormData()
-    form.append("files[]", fs.createReadStream(path))   
-    const res = await fetch("https://uguu.se/upload.php", {
-      method: "POST",
-      headers: form.getHeaders(),
-      body: form
-    })    
-    const json = await res.json()
-    await fs.promises.unlink(path)   
-    return json
-  } catch (e) {
-    await fs.promises.unlink(path)
-    throw "Error"
-  }
+        let buttons = [
+            {
+                name: "cta_copy",
+                buttonParamsJson: JSON.stringify({
+                    display_text: "Copy Link",
+                    copy_code: catboxLink
+                })
+            }
+        ];
+
+        let msg = {
+            interactiveMessage: proto.Message.InteractiveMessage.create({
+                header: proto.Message.InteractiveMessage.Header.create({
+                    hasMediaAttachment: true,
+                    ...thumbnail
+                }),
+                body: proto.Message.InteractiveMessage.Body.create({ text: caption }),
+                footer: proto.Message.InteractiveMessage.Footer.create({
+                    text: ""
+                }),
+                nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                    buttons
+                })
+            })
+        };
+
+        await conn.relayMessage(m.chat, msg, { messageId: m.key.id });
+    } catch (error) {
+        conn.reply(m.chat, `Error: ${error.message || error}`, m);
+    }
+};
+
+handler.help = ['tourl'];
+handler.tags = ['tools'];
+handler.command = /^(tourl)$/i;
+handler.owner = false;
+
+export default handler;
+
+async function catboxUpload(buffer) {
+    const { ext, mime } = await fileTypeFromBuffer(buffer) || { ext: 'bin', mime: 'application/octet-stream' };
+    const form = new FormData();
+    form.append('reqtype', 'fileupload');
+    form.append('fileToUpload', buffer, { filename: `file.${ext}`, contentType: mime });
+
+    const res = await fetch('https://catbox.moe/user/api.php', { method: 'POST', body: form });
+    if (!res.ok) throw new Error('Gagal menghubungi Catbox.');
+    return await res.text();
 }

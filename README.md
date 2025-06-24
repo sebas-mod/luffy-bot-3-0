@@ -21,4 +21,5 @@ Waguri es un bot de WhatsApp diseñado para facilitarte el día y tu vida diaria
 * Si encuentras algún problema o tienes sugerencias, no dudes en hacérmelo saber.
 
 ## Contacto
-[Agrega información de contacto si es necesario]
+<img "https://img.shields.io/badge/WhatsApp%20channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="Canal WhatsApp"/>
+  </a>

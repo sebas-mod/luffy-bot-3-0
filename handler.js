@@ -611,7 +611,7 @@ global.dfail = (type, m, conn) => {
         private: "> _*✧ Ve a mi chat privado y usa este comando*_",
         admin: "> _*✧ Quien eres?, tu no eres admin*_",
         botAdmin: "> _*✧ Es necesario que sea admin primero para usar esta función*_",
-        unreg: "> _*‼️USUARIO NO REGISTRADO‼️*_\n\n`Para registrarse:`\n\n> usa el comando .reg",
+        unreg: "> _*‼️USUARIO NO REGISTRADO‼️*_\n\n`Para registrarse:`\n\n> usa el comando .reg nombre.edad",
         restrict: "> _*✧ Comando desactivado por mi Owner`*_" 
     }[type]
     

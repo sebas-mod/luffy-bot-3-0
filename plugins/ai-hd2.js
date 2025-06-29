@@ -1,5 +1,6 @@
 import fetch from 'node-fetch'
 import { FormData } from "formdata-node"
+import { uploadPomf } from '../lib/uploadImage.js'
 
 let handler = async (m, { conn, usedPrefix, command, text }) => {
     try {

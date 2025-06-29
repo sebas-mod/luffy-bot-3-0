@@ -1,43 +1,22 @@
 import axios from 'axios'
+import cheerio from 'cheerio'
 
-let handler = async (m, { conn, args }) => {
-    if (!args[0]) throw m.reply('Ingresa el link de Facebook');
-    const sender = m.sender.split('@')[0];
-    const url = args[0];
+let handler = async (m, { conn, args, text }) => {
+    if (!text) return reply("🔗 ¡Introduce la URL de Facebook!");
 
-    m.reply(wait);
+    await conn.sendMessage(m.chat, { react: { text: "⏳", key: m.key } });
 
-    try {
-        const { data } = await axios.get(`https://api.ryzendesu.vip/api/downloader/fbdl?url=${encodeURIComponent(url)}`);
-
-        if (!data.status || !data.data || data.data.length === 0) throw m.reply('Error');
-
-        // Prioritize 720p (HD) and fallback to 360p (SD)
-        let video = data.data.find(v => v.resolution === '720p (HD)') || data.data.find(v => v.resolution === '360p (SD)');
-        
-        if (video && video.url) {
-            const videoBuffer = await axios.get(video.url, { responseType: 'arraybuffer' }).then(res => res.data);
-            const caption = `✧ Para: @${sender}`;
-
-            await conn.sendMessage(
-                m.chat, {
-                video: videoBuffer,
-                mimetype: "video/mp4",
-                fileName: `video.mp4`,
-                caption: caption,
-                mentions: [m.sender],
-            }, {
-                quoted: m
-            }
-            );
-        } else {
-            throw m.reply('Error');
-        }
-    } catch (error) {
-        console.error('Handler Error:', error);
-        conn.reply(m.chat, `Error: ${error}`, m);
+    let res = await downloadFacebook(text);
+    if (res.error) {
+        await conn.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
+        return m.reply(`⚠ *Error:* ${res.error}`);
     }
-}
+
+    await conn.sendMessage(m.chat, { 
+        video: { url: res.video }, 
+        caption: "✅ *¡Video de Facebook descargado exitosamente!*" 
+    }, { quoted: m });
+};
 
 handler.help = ['fb *<link>*']
 handler.tags = ['downloader']
@@ -47,3 +26,37 @@ handler.limit = true
 handler.register = true
 
 export default handler
+
+async function downloadFacebook(url) {
+    try {
+        const form = new URLSearchParams();
+        form.append("q", url);
+        form.append("vt", "home");
+
+        const { data } = await axios.post('https://yt5s.io/api/ajaxSearch', form, {
+            headers: {
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        });
+
+        if (data.status !== "ok") throw new Error("Gagal mengambil data.");
+
+        const $ = cheerio.load(data.data);
+        const thumb = $('img').attr("src");
+        let links = [];
+
+        $('table tbody tr').each((_, el) => {
+            const quality = $(el).find('.video-quality').text().trim();
+            const link = $(el).find('a.download-link-fb').attr("href");
+            if (quality && link) links.push({ quality, link });
+        });
+
+        if (links.length === 0) throw new Error("Tidak ada video yang dapat diunduh.");
+
+        return { thumb, video: links[0].link };
+    } catch (error) {
+        return { error: error.message };
+    }
+}

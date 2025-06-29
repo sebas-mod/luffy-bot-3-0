@@ -22,17 +22,6 @@ let handler = async (m, { conn, text, command }) => {
   audio: { url: download.download },
   mimetype: 'audio/mpeg',
   fileName: `${download.title} - ${download.artist}.mp3`,
-  contextInfo: {
-    externalAdReply: {
-      title: "Waguri Ai - Spotify",
-      body: ``,
-      thumbnailUrl: "https://files.catbox.moe/tffj2n.jpg",
-      mediaType: 1,
-      sourceUrl: result.url,
-      renderLargerThumbnail: true,
-      showAdAttribution: true
-    }
-  }
 }, { quoted: m })
 
   } catch (e) {

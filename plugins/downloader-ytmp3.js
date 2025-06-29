@@ -28,24 +28,21 @@ const caption = `
 > url: ${tes.url}`;
 
 //await m.reply(caption)
-
-await conn.sendMessage(m.chat, { document: { url: mp3Result.data.downloadUrl }, caption: wm, mimetype: 'video/mp4', fileName: `${tes.title}` + `.mp4`}, {quoted: m })
-
-/*await conn.sendMessage(m.chat, {
+await conn.sendMessage(m.chat, {
       audio: { url: mp3Result.data.downloadUrl },
       mimetype: "audio/mp4",
       fileName: tes.title,
       mentions: [m.sender]
-    }, { quoted: m });*/
+    }, { quoted: m });
 await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key }})
 } else {
   console.error("Error:", mp3Result.error);
   await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key }})
 }
 }
-handler.help = ['ytmp3doc *<link>*'];
+handler.help = ['ytmp3 *<link>*'];
 handler.tags = ['downloader'];
-handler.command = ["ytmp3doc","ytadoc","ytaudiodoc"];
+handler.command = ["ytmp3","yta","ytaudio"];
 
 export default handler
 

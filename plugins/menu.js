@@ -101,7 +101,7 @@ let handler = async (m, { conn, usedPrefix: _p, args = [], command }) => {
 //        let package = JSON.parse(await fs.promises.readFile(path.join(__dirname, '../package.json')).catch(_ => '{}'))
         let { exp, limit, level, role } = global.db.data.users[m.sender]
         let { min, xp, max } = xpRange(level, global.multiplier)
-        let name = `@${m.sender.split`@`[0]}`
+        let name = m.pushName || `@${m.sender.split`@`[0]}`
         let teks = args[0] || ''
         
         let d = new Date(new Date + 3600000)
@@ -154,6 +154,25 @@ let handler = async (m, { conn, usedPrefix: _p, args = [], command }) => {
                 (_, name) => '' + replace[name])
 
 conn.sendFile(m.chat, "https://files.catbox.moe/t0s63z.jpg", 'menu.jpg', estilo(text), global.fliveLoc2, null)
+
+/*            await conn.relayMessage(m.chat, {
+            extendedTextMessage:{
+                text: text, 
+                contextInfo: {
+                    mentionedJid: [m.sender],
+                    externalAdReply: {
+                        title: date,
+                        mediaType: 1,
+                        previewType: 0,
+                        renderLargerThumbnail: true,
+                        thumbnailUrl: 'https://pomf2.lain.la/f/4gv01t8y.png',
+                        sourceUrl: 'https://whatsapp.com/channel/0029VarbyoN2ZjCkcPW7q33F'
+                    }
+                }, 
+                mentions: [m.sender]
+            }
+        }, {})*/
+            return
         }
 
         if (!allTags[teks]) {
@@ -209,7 +228,25 @@ conn.sendFile(m.chat, "https://files.catbox.moe/t0s63z.jpg", 'menu.jpg', estilo(
         let text = menuCategory.replace(new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join`|`})`, 'g'), 
             (_, name) => '' + replace[name])
 
-conn.sendFile(m.chat, "https://files.catbox.moe/t0s63z.jpg", 'menu.jpg', estilo(text), global.fliveLoc2, null)
+conn.sendFile(m.chat, "https://files.catbox.moe/qzj7we.mp4", 'menu.mp4', estilo(text), global.fliveLoc2, null)
+
+/*        await conn.relayMessage(m.chat, {
+            extendedTextMessage:{
+                text: text, 
+                contextInfo: {
+                    mentionedJid: [m.sender],
+                    externalAdReply: {
+                        title: date,
+                        mediaType: 1,
+                        previewType: 0,
+                        renderLargerThumbnail: true,
+                        thumbnailUrl: 'https://pomf2.lain.la/f/7b5qzd8.png',
+                        sourceUrl: 'https://whatsapp.com/channel/0029VarbyoN2ZjCkcPW7q33F'
+                    }
+                }, 
+                mentions: [m.sender]
+            }
+        }, {})*/
     } catch (e) {
         conn.reply(m.chat, 'Perdon, hay un error con el menu', m)
         console.error(e)

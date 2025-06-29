@@ -1,257 +1,195 @@
-import axios from 'axios';
-import FormData from 'form-data';
 import yts from 'yt-search';
+import fetch from 'node-fetch';
+import { prepareWAMessageMedia, generateWAMessageFromContent } from '@adiwajshing/baileys';
 
-let handler = async (m, { conn, args, text }) => {
-  if (!args[0]) throw m.reply(`✧ Ejemplo: ${usedPrefix}${command} Joji - Ew`);
-  
-await conn.sendMessage(m.chat, { react: { text: '🕒', key: m.key }})
-  
-   let results = await yts(text);
-   let tes = results.videos[0]
-    
-const mp3Result = await youtubeScraper.youtubeMp3(tes.url);
-if (mp3Result.success) {
-  console.log("Title:", mp3Result.data.title);
-  console.log("Download URL:", mp3Result.data.downloadUrl);
+const handler = async (m, { conn, args, usedPrefix, command }) => {
+  if (!args[0]) return conn.reply(m.chat, `✧ Ejemplo: ${usedPrefix}${command} Joji - Ew`, m);
+
+  await m.react('🔎');
+  try {
+    let query = args.join(" ");
+    let searchResults = await searchVideos(query);
+    let spotifyResults = await searchSpotify(query);
+    let AppleMusicResult = await (await fetch(`https://api.siputzx.my.id/api/s/applemusic?query=${query}&region=es`)).json();
+//    const { title, artist, image, link, } = AppleMusicResult.data.result[0];
+
+    if (!searchResults.length && !spotifyResults.length) throw new Error('*✖️ No se encontraron resultados.*');
+
+    let video = searchResults[0];
+
+    let thumbnail;
+    try {
+      thumbnail = await (await fetch(video.miniatura)).buffer();
+    } catch (e) {
+      console.warn('*✖️ No se pudo obtener la miniatura, usando imagen por defecto.*');
+      thumbnail = await (await fetch('https://telegra.ph/file/36f2a1bd2aaf902e4d1ff.jpg')).buffer();
+    }
+
 
 const caption = `
       *💮 PLAY AUDIO 💮*
  
-  ✧ : \`titulo;\` ${tes.title || 'no encontrado'}
-  ✧ : \`artista;\` ${tes.author.name || 'no encontrado'}
-  ✧ : \`duracion;\` ${tes.duration || 'no encontrado'}
-  ✧ : \`tipo;\` ${mp3Result.data.type || 'no encontrado'}
+  ✧ : \`titulo;\` ${video.titulo || 'no encontrado'}
+  ✧ : \`artista;\` ${video.canal || 'no encontrado'}
+  ✧ : \`duracion;\` ${video.duracion || 'no encontrado'}
  
 > ${wm}
 > Pedido de @${m.sender.split('@')[0]}
-> url: ${tes.url}`;
-
-await m.reply(caption)
-await conn.sendMessage(m.chat, {
-      audio: { url: mp3Result.data.downloadUrl },
-      mimetype: "audio/mp4",
-      fileName: tes.title,
-      mentions: [m.sender]
-    }, { quoted: m });
-await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key }})
-} else {
-  console.error("Error:", mp3Result.error);
-  await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key }})
-}
-}
-handler.help = ['play *<consulta>*'];
-handler.tags = ['downloader'];
-handler.command = ["play","song","musica"];
-
-export default handler
-
-
-class Success {
-  constructor(data) {
-    this.success = true;
-    this.data = data;
-  }
-}
-
-class ErrorResponse {
-  constructor(error) {
-    this.success = false;
-    this.error = error;
-  }
-}
-
-const youtubeScraper = {
-  youtubeMp3: async (url) => {
-    try {
-      if (!url || !url.includes('youtube.com') && !url.includes('youtu.be')) {
-        return new ErrorResponse({
-          message: "¡URL de YouTube no válida!"
-        });
-      }
-
-      const ds = new FormData();
-      ds.append("url", url);
-      
-      const { data } = await axios.post(
-        "https://www.youtubemp3.ltd/convert",
-        ds,
+> url: ${video.url}`;
+    let ytSections = searchResults.slice(1, 11).map((v, index) => ({
+      title: `${index + 1}┃ ${v.titulo}`,
+      rows: [
         {
-          headers: {
-            ...ds.getHeaders(),
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          title: `🎶 Descargar MP3`,
+          description: `Duración: ${v.duracion || 'No disponible'}`,
+          id: `${usedPrefix}ytmp3 ${v.url}`
+        },
+        {
+          title: `📦 Descargar MP3 Documento`,
+          description: `Duración: ${v.duracion || 'No disponible'}`,
+          id: `${usedPrefix}ytmp3doc ${v.url}`
+        },
+        {
+          title: `🎥 Descargar MP4`,
+          description: `Duración: ${v.duracion || 'No disponible'}`,
+          id: `${usedPrefix}ytmp4 ${v.url}`
+        },
+        {
+          title: `📦 Descargar MP4 Documento`,
+          description: `Duración: ${v.duracion || 'No disponible'}`,
+          id: `${usedPrefix}ytmp4doc ${v.url}`
+        }
+      ]
+    }));
+
+    let spotifySections = spotifyResults.slice(0, 10).map((s, index) => ({
+      title: `${index + 1}┃ ${s.titulo}`,
+      rows: [
+        {
+          title: `🎶 Descargar Audio`,
+          description: `Duración: ${s.duracion || 'No disponible'}`,
+          id: `${usedPrefix}spotify ${s.url}`
+        }
+      ]
+    }));
+    
+    let applemusicSections = AppleMusicResult.data.result.slice(0, 5).map((a, index) => ({
+      title: `${index + 1}┃ ${a.title}`,
+      rows: [
+        {
+          title: `🎶 Descargar Audio`,
+          description: `Artista: ${a.artist || 'No disponible'}`,
+          id: `${usedPrefix}applemusic ${a.link}`
+        }
+      ]
+    }));
+
+    await conn.sendMessage(m.chat, {
+      image: thumbnail,
+      caption: caption,
+      footer: wm,
+      contextInfo: {
+        mentionedJid: [m.sender],
+        forwardingScore: 999,
+        isForwarded: true
+      },
+      buttons: [
+        {
+          buttonId: `${usedPrefix}ytmp3 ${video.url}`,
+          buttonText: { displayText: '🎧 Descargar 𝖠𝗎𝖽𝗂𝗈' },
+          type: 1,
+        },
+        {
+          buttonId: `${usedPrefix}ytmp4 ${video.url}`,
+          buttonText: { displayText: '🎬 Descargar 𝖵𝗂𝖽𝖾𝗈' },
+          type: 1,
+        },
+        {
+          type: 4,
+          nativeFlowInfo: {
+            name: 'single_select',
+            paramsJson: JSON.stringify({
+              title: '𝖱𝖾𝗌𝗎𝗅𝗍𝖺𝖽𝗈𝗌 De 𝖸𝗈𝗎𝖳𝗎𝖻𝖾',
+              sections: ytSections,
+            }),
           },
-          timeout: 45000
-        }
-      );
-      
-      if (!data || !data.link) {
-        return new ErrorResponse({
-          message: "No se pudo obtener el enlace de descarga"
-        });
-      }
-      
-      return new Success({
-        title: data.filename || "Título desconocido",
-        downloadUrl: data.link,
-        type: "mp3"
-      });
-      
-    } catch (error) {
-      if (error.code === 'ECONNABORTED') {
-        return new ErrorResponse({
-          message: "Tiempo de espera de la solicitud agotado, inténtelo de nuevo más tarde"
-        });
-      }
-      
-      return new ErrorResponse({
-        message: error.response?.data?.message || error.message || "Gagal convert YouTube ke MP3"
-      });
-    }
-  },
+        },
+/*        {
+          type: 4,
+          nativeFlowInfo: {
+            name: 'single_select',
+            paramsJson: JSON.stringify({
+              title: '𝖱𝖾𝗌𝗎𝗅𝗍𝖺𝖽𝗈𝗌 De Apple Music',
+              sections: applemusicSections,
+            }),
+          },
+        },*/
+        {
+          type: 4,
+          nativeFlowInfo: {
+            name: 'single_select',
+            paramsJson: JSON.stringify({
+              title: '𝖱𝖾𝗌𝗎𝗅𝗍𝖺𝖽𝗈𝗌 De 𝖲𝗉𝗈𝗍𝗂𝖿𝗒',
+              sections: spotifySections,
+            }),
+          },
+        },
+      ],
+      headerType: 1,
+      viewOnce: true
+    }, { quoted: m });
 
-  ytdl: async (url, quality = "720") => {
-    try {
-      if (!url || !url.includes('youtube.com') && !url.includes('youtu.be')) {
-        return new ErrorResponse({
-          message: "¡URL de YouTube no válida!"
-        });
-      }
-
-      const validQuality = {
-        "480": 480,
-        "1080": 1080,
-        "720": 720,
-        "360": 360,
-        "audio": "mp3",
-      };
-      
-      if (!Object.keys(validQuality).includes(quality)) {
-        return new ErrorResponse({
-          message: "¡Calidad no válida!",
-          availableQuality: Object.keys(validQuality)
-        });
-      }
-      
-      const qualitys = validQuality[quality];
-      
-      const { data: firstRequest } = await axios.get(
-        `https://p.oceansaver.in/ajax/download.php?button=1&start=1&end=1&format=${qualitys}&iframe_source=https://allinonetools.com/&url=${encodeURIComponent(url)}`,
-        { 
-          timeout: 30000,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        }
-      );
-      
-      if (!firstRequest || !firstRequest.progress_url) {
-        return new ErrorResponse({
-          message: "No se pudo iniciar el proceso de descarga"
-        });
-      }
-      
-      const { progress_url } = firstRequest;
-      let metadata = {
-        image: firstRequest.info?.image || "",
-        title: firstRequest.info?.title || "Título desconocido",
-        downloadUrl: "",
-        quality: quality,
-        type: quality === "audio" ? "mp3" : "mp4"
-      };
-      
-      let datas;
-      let attempts = 0;
-      const maxAttempts = 40;
-      
-      console.log("Procesando descarga, por favor espere...");
-      
-      do {
-        if (attempts >= maxAttempts) {
-          return new ErrorResponse({
-            message: "Timeout: El proceso de descarga tarda demasiado, inténtalo de nuevo."
-          });
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        try {
-          const { data } = await axios.get(progress_url, { 
-            timeout: 15000,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          });
-          datas = data;
-          
-          if (datas.progress && datas.progress < 100) {
-            console.log(`Progeso: ${datas.progress}%`);
-          }
-          
-        } catch (pollError) {
-          console.log(`El intento de sondeo ${attempts + 1} falló, se está reintentando...`);
-        }
-        
-        attempts++;
-      } while (!datas?.download_url);
-      
-      if (!datas.download_url) {
-        return new ErrorResponse({
-          message: "No se pudo obtener la URL de descarga"
-        });
-      }
-      
-      metadata.downloadUrl = datas.download_url;
-      console.log("¡Ya está listo para descargar!");
-      
-      return new Success(metadata);
-      
-    } catch (error) {
-      if (error.code === 'ECONNABORTED') {
-        return new ErrorResponse({
-          message: "Tiempo de espera de la solicitud agotado, inténtelo de nuevo más tarde"
-        });
-      }
-      
-      return new ErrorResponse({
-        message: error.response?.data?.message || error.message || "No se pudo descargar el vídeo"
-      });
-    }
-  },
-
-  // Utility function untuk validasi URL YouTube
-  isValidYouTubeUrl: (url) => {
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
-    return youtubeRegex.test(url);
-  },
-
-  // Utility function untuk extract video ID
-  extractVideoId: (url) => {
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const match = url.match(regex);
-    return match ? match[1] : null;
+    await m.react('✅');
+  } catch (e) {
+    console.error(e);
+    await m.react('✖️');
+    conn.reply(m.chat, '*`Error al buscar el video.`*', m);
   }
 };
 
-// Ejemplo de uso:
-/*
-// MP3 Download
-const mp3Result = await youtubeScraper.youtubeMp3("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-if (mp3Result.success) {
-  console.log("Title:", mp3Result.data.title);
-  console.log("Download URL:", mp3Result.data.downloadUrl);
-} else {
-  console.error("Error:", mp3Result.error);
+handler.help = ['play *<texto>*'];
+handler.tags = ['downloader'];
+handler.command = ['play'];
+export default handler;
+
+async function searchVideos(query) {
+  try {
+    const res = await yts(query);
+    return res.videos.slice(0, 10).map(video => ({
+      titulo: video.title,
+      url: video.url,
+      miniatura: video.thumbnail,
+      canal: video.author.name,
+      publicado: video.timestamp || 'No disponible',
+      vistas: video.views || 'No disponible',
+      duracion: video.duration?.timestamp || 'No disponible'
+    }));
+  } catch (error) {
+    console.error('Error en yt-search:', error.message);
+    return [];
+  }
 }
 
-// Video Download
-const videoResult = await youtubeScraper.ytdl("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "720");
-if (videoResult.success) {
-  console.log("Title:", videoResult.data.title);
-  console.log("Thumbnail:", videoResult.data.image);
-  console.log("Download URL:", videoResult.data.downloadUrl);
-  console.log("Quality:", videoResult.data.quality);
-} else {
-  console.error("Error:", videoResult.error);
+async function searchSpotify(query) {
+  try {
+    const res = await fetch(`https://delirius-apiofc.vercel.app/search/spotify?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    return data.data.slice(0, 10).map(track => ({
+      titulo: track.title,
+      url: track.url,
+      duracion: track.duration || 'No disponible'
+    }));
+  } catch (error) {
+    console.error('Error en Spotify API:', error.message);
+    return [];
+  }
 }
-*/
+
+function convertTimeToSpanish(timeText) {
+  return timeText
+    .replace(/year/, 'año').replace(/years/, 'años')
+    .replace(/month/, 'mes').replace(/months/, 'meses')
+    .replace(/day/, 'día').replace(/days/, 'días')
+    .replace(/hour/, 'hora').replace(/hours/, 'horas')
+    .replace(/minute/, 'minuto').replace(/minutes/, 'minutos');
+}

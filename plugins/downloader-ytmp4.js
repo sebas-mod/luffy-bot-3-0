@@ -34,15 +34,15 @@ let handler = async (m, { conn, command, text, usedPrefix }) => {
 > ${wm}
 > Pedido de @${m.sender.split('@')[0]}`;
 
-await conn.sendMessage(m.chat, { document: { url: url }, caption: wm, mimetype: 'video/mp4', fileName: `${title}` + `.mp4`}, {quoted: m })
+//await conn.sendMessage(m.chat, { document: { url: url }, caption: caption, mimetype: 'video/mp4', fileName: `${title}` + `.mp4`}, {quoted: m })
 
-/*    await conn.sendMessage(m.chat, {
+    await conn.sendMessage(m.chat, {
       video: { url: url },
       mimetype: "video/mp4",
       fileName: title,
       caption: wm,
       mentions: [m.sender]
-    }, { quoted: m });*/
+    }, { quoted: m });
 await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key }})
 
   } catch (error) {
@@ -51,9 +51,9 @@ await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key }})
   }
 };
 
-handler.help = ['ytmp4doc *<link>*','ytvdoc *<link>*'];
+handler.help = ['ytmp4 *<link>*','ytv *<link>*'];
 handler.tags = ['downloader'];
-handler.command = /^(ytmp4doc|ytvdoc|ytvideodoc)$/i;
+handler.command = /^(ytmp4|ytv|ytvideo)$/i;
 
 handler.register = true
 handler.disable = false

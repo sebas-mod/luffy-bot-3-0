@@ -1,53 +1,33 @@
-import _ from "lodash"
+import axios from 'axios'
 
-let handler = async (m, { conn, command, usedPrefix, args }) => {
-  const text = _.get(args, "length") ? args.join(" ") : _.get(m, "quoted.text") || _.get(m, "quoted.caption") || _.get(m, "quoted.description") || ""
-  if (typeof text !== 'string' || !text.trim()) return m.reply(`✦ Ingresa una consulta\n*Ejemplo:* .${command} Joji Ew`)
-
-  await m.reply('✦ Espere un momento...')
-  
-const dps = await fetch(`https://rest.cifumo.biz.id/api/downloader/spotify-dl?url=${text}`)
-  const dp = await dps.json()
-
-  const { title = "No encontrado", type = "No encontrado", artis = "No encontrado", durasi = "No encontrado", download, image } = dp.data
-
-  const captvid = ` *✦Título:* ${title}
- *✧Duración:* ${durasi}
- *✦Tipo:* ${type}
- *✧Artista:* ${artis}
- *✦link:* ${text}
- `
-
-  const spthumb = (await conn.getFile(image))?.data
-
-  const infoReply = {
-    contextInfo: {
-      externalAdReply: {
-        body: `✧ En unos momentos se entrega su audio`,
-        mediaType: 1,
-        mediaUrl: text,
-        previewType: 0,
-        renderLargerThumbnail: true,
-        sourceUrl: text,
-        thumbnail: spthumb,
-        title: `S P O T I F Y - A U D I O`
-      }
-    }
+let handler = async (m, { conn, text, command }) => {
+  if (!text) {
+    return m.reply(`¡Introduce el link de la canción!`)
   }
 
-  await conn.reply(m.chat, captvid, m, infoReply)
-  infoReply.contextInfo.externalAdReply.body = `Audio descargado con éxito`
-  
+  try {
+
+await m.react("⏳")
+
+    const down = await axios.get(`https://velyn.biz.id/api/downloader/spotifydl?url=${encodeURIComponent(text)}`)
+    const download = down.data.data
+    if (!download?.download) throw m.reply('❌ Error al descargar la canción.');
+
     await conn.sendMessage(m.chat, {
-      audio: { url: download },
-      caption: captvid,
-      mimetype: "audio/mpeg",
-      contextInfo: infoReply.contextInfo
-    }, { quoted: m })
+  audio: { url: download.download },
+  mimetype: 'audio/mpeg',
+  fileName: `${download.title} - ${download.artist}.mp3`,
+}, { quoted: m })
+await m.react("✅")
+  } catch (e) {
+    console.error(e)
+    m.reply(typeof e === 'string' ? e : '❌ Se produjo un error al procesar la canción.')
+    await m.react("❌")
+  }
 }
 
-handler.help = ["spotifydl *<link>*"]
-handler.tags = ["downloader"]
-handler.command = /^(spotifydl)$/i
-handler.limit = true
+handler.help = ['spotifydl', 'spotify'].map(v => v + ' *<url>*')
+handler.tags = ['downloader']
+handler.command = ["spotifydl","spotify"]
+
 export default handler

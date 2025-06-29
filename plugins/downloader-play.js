@@ -42,7 +42,7 @@ const caption = `
         {
           title: `🎶 Descargar MP3`,
           description: `Duración: ${v.duracion || 'No disponible'}`,
-          id: `${usedPrefix}ytmp3 ${v.url}`
+          id: `${usedPrefix}play3 ${v.url}`
         },
         {
           title: `📦 Descargar MP3 Documento`,

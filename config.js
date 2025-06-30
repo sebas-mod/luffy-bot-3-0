@@ -26,11 +26,11 @@ let hora = moment.tz('America/Buenos_Aires').format('HH')
 const readMore = more.repeat(4001)
 
 /*============= INFO PRINCIPAL =============*/
-global.owner = [['5493865536185', 'KenisawaDev', true]]
+global.owner = [['5493865642938', 'KenisawaDev', true]]
 global.mods = []
 global.prems = []
 global.nomorbot = '5493865208712'
-global.nomorown = '5493865536185'
+global.nomorown = '5493865642938'
 
 /*============= MARCA DE AGUA =============*/
 global.readMore = readMore
@@ -49,7 +49,7 @@ global.wibb = `${horario}`
 global.sig = 'https://www.instagram.com/'
 global.sgh = 'https://github.com/MauroAzcurra'
 global.sgc = 'https://whatsapp.com/channel/'
-global.sgw = 'https://wa.me/5493865860048'
+global.sgw = 'https://wa.me/5493865642938'
 global.sdc = '-'
 global.sfb = 'https://www.facebook.com/'
 global.snh = 'https://www.instagram.com/'

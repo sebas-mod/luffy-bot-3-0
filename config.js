@@ -26,7 +26,7 @@ let hora = moment.tz('America/Buenos_Aires').format('HH')
 const readMore = more.repeat(4001)
 
 /*============= INFO PRINCIPAL =============*/
-global.owner = [['5493865642938', 'KenisawaDev', true]]
+global.owner = [['5491166887146', 'sebasDev', true]]
 global.mods = []
 global.prems = []
 global.nomorbot = '5493865208712'
